@@ -2,6 +2,23 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## Rubric
+### Describe the effect each of the P, I, D components had in your implementation.
+* Proportional indicates how hard you want to steer back to correct the cross track error. For the steering controller, higher value of P forces the car to oscillate around the waypoints it is trying to follow by making rough turn. For the throttle controller, higher value of P was disired because we were not able to cruse at the desired speed with small value. I want to make stronger adjustment when I go over the speed limit.
+* Integral correspond to the accumulated error over time can be mostly used to account for system biases. If the steering wheel is biased to the left, this parameter can capture that bias. If the track the vehicule is driven on his bias has more left turns, the Integral component can account for the bias. For the simulator, I have set this parameter to zero for both the throttle and speed controller, but as a rule of thumb, small values in the magnitude of 0.001 works best for the I components because we want to put more weights on the present rather than the past.
+* Derivative is the rate of change of the cte. This parameter reduce the oscillation and smooth out the driving.
+### Describe how the final hyperparameters were chosen.
+I mainly tuned the hyperparameters manually abiding to the following guidelines:
+* For a minimization problem (steering angle), choose negative coefficients.
+* For a maximization problem (speed), chose positive coefficients.
+* For each of the components:
+  * Fix the other two components, and start to increase or decrease the to be optimized component toward the direction that minimizes the cte.
+
+For the steering angle PID controller, P = -0.1, I = 0, D = -4.
+
+For the throttle PID controller, P = 2, P = 0, P = 0.1.
+
+The process was tedious and based on trial an error, so  I should consider hill climbing or integer linear programming to optimizes those coefficient, but it was challenging without an headless server.
 
 ## Dependencies
 
