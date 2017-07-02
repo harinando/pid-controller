@@ -30,6 +30,12 @@ std::string hasData(std::string s) {
   }
   return "";
 }
+/*
+ * P -- How hard you want to steer back? < 0
+ * I -- wheel are out of the alignment? Fix error.
+ * D -- Not oscillate so hard around center line.
+ *        Negative value because we minimize the amount of change.
+ */
 
 int main()
 {
@@ -37,15 +43,17 @@ int main()
 
   PID pid, pid_throttle;
   // TODO: Initialize the pid variable.
-  /* Higher value
+  pid.Init(-0.1, -0, -4);
+  /*  Coeff are positive because we are trying to maximize the speed around set point.
+   *    Small P could not control limit the speed close to set point.
    */
-  pid.Init(0.1, 0.0002, 4);
-  pid_throttle.Init(0.2, 0.0004, 0.1);
+  pid_throttle.Init(2, 0, 0.1);
 
   h.onMessage([&pid, &pid_throttle](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
+    double set_point = 70;
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
       auto s = hasData(std::string(data).substr(0, length));
@@ -56,7 +64,6 @@ int main()
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
-//          double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value, throttle_value;
           /*
           * TODO: Calcuate steering value here, remember the steering value is
@@ -65,10 +72,10 @@ int main()
           * another PID controller to control the speed!
           */
           pid.UpdateError(cte);
-          steer_value = -pid.Kp*pid.p_error - pid.Ki*pid.i_error - pid.Kd*pid.d_error;
+          steer_value = pid.TotalError();
           
-          pid_throttle.UpdateError(fabs(75-speed));
-          throttle_value = pid_throttle.Kp*pid_throttle.p_error + pid_throttle.Ki*pid_throttle.i_error + pid_throttle.Kd*pid_throttle.d_error;
+          pid_throttle.UpdateError(set_point-speed);
+          throttle_value = pid_throttle.TotalError();
           
           if (throttle_value > 1)
             throttle_value = 1;
